@@ -1,6 +1,7 @@
 import React from 'react';
-import { Landmark, PiggyBank, Building, Home } from 'lucide-react';
+import { Landmark, PiggyBank, Building, Home, Loader2 } from 'lucide-react';
 import MetricCard from '@/components/MetricCard';
+import { useNetWorth, useCreditReport, useEpfDetails } from '@/hooks/useUserData';
 import {
   nwTrend, liab, quarters, breakdown, bkLabels, taxUsed, taxLeft, taxSections,
   creditHistory, creditMonths, formatFullCurrency, chartTooltipStyle,
@@ -10,25 +11,68 @@ import {
   BarChart, Bar, LineChart, Line, Legend,
 } from 'recharts';
 
-const nwData = quarters.map((q, i) => ({ quarter: q, netWorth: nwTrend[i], liabilities: liab[i] }));
-const breakdownData = bkLabels.map((l, i) => ({ name: l, value: breakdown[i] }));
+// Default fallback data
+const defaultNwData = quarters.map((q, i) => ({ quarter: q, netWorth: nwTrend[i], liabilities: liab[i] }));
+const defaultBreakdownData = bkLabels.map((l, i) => ({ name: l, value: breakdown[i] }));
 const breakdownColors = ['#2563eb', '#00a87c', '#7c3aed', '#d97706', '#e11d48'];
-const taxData = taxSections.map((s, i) => ({ section: s, used: taxUsed[i], remaining: taxLeft[i] }));
-const creditData = creditMonths.map((m, i) => ({ month: m, score: creditHistory[i] }));
+const defaultTaxData = taxSections.map((s, i) => ({ section: s, used: taxUsed[i], remaining: taxLeft[i] }));
+const defaultCreditData = creditMonths.map((m, i) => ({ month: m, score: creditHistory[i] }));
 
 const NetWorth: React.FC = () => {
+  const { data: netWorthData, isLoading: netWorthLoading } = useNetWorth();
+  const { data: creditData, isLoading: creditLoading } = useCreditReport();
+  const { data: epfData, isLoading: epfLoading } = useEpfDetails();
+
+  const isLoading = netWorthLoading || creditLoading || epfLoading;
+
+  // Calculate values from MCP data or use defaults
+  const netWorth = netWorthData?.netWorth ?? 1247850;
+  const savings = netWorthData?.breakdown?.savings ?? 247850;
+  const epfValue = epfData?.balance ?? 312400;
+  const liabilities = netWorthData?.totalLiabilities ?? 540000;
+  const creditScore = creditData?.score ?? 792;
+
+  // Net worth trend data
+  const nwData = netWorthData?.history
+    ? netWorthData.history.map((h, i) => ({ quarter: h.month, netWorth: h.value, liabilities: liabilities }))
+    : defaultNwData;
+
+  // Tax deductions data
+  const taxData = taxSections.map((s, i) => ({ section: s, used: taxUsed[i], remaining: taxLeft[i] }));
+  const breakdownData = netWorthData?.breakdown
+    ? [
+        { name: 'Savings', value: netWorthData.breakdown.savings },
+        { name: 'Invest', value: netWorthData.breakdown.investments },
+        { name: 'EPF', value: netWorthData.breakdown.epf },
+        { name: 'Insurance', value: netWorthData.breakdown.insurance },
+        { name: 'Loan', value: -netWorthData.breakdown.loans },
+      ]
+    : defaultBreakdownData;
+
+  const creditScoreHistory = creditData?.scoreHistory
+    ? creditData.scoreHistory.map(c => ({ month: c.month, score: c.score }))
+    : defaultCreditData;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-[1400px]">
       <h1 className="text-3xl font-display italic text-penta-text1">Net Worth</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard title="Total Net Worth" value="₹12,47,850" trend={{ value: '+5.4%', direction: 'up' }}
+        <MetricCard title="Total Net Worth" value={formatFullCurrency(netWorth)} trend={{ value: '+5.4%', direction: 'up' }}
           icon={<Landmark className="w-5 h-5" />} colorClass="bg-penta-violet-light text-penta-violet" />
-        <MetricCard title="Savings" value="₹2,47,850" trend={{ value: '+3.2%', direction: 'up' }}
+        <MetricCard title="Savings" value={formatFullCurrency(savings)} trend={{ value: '+3.2%', direction: 'up' }}
           icon={<PiggyBank className="w-5 h-5" />} colorClass="bg-penta-teal-light text-penta-teal" />
-        <MetricCard title="EPF / NPS" value="₹3,12,400" trend={{ value: '+8.1%', direction: 'up' }}
+        <MetricCard title="EPF / NPS" value={formatFullCurrency(epfValue)} trend={{ value: '+8.1%', direction: 'up' }}
           icon={<Building className="w-5 h-5" />} colorClass="bg-penta-blue-light text-penta-blue" />
-        <MetricCard title="Home Loan" value="-₹5,40,000" trend={{ value: '-2.3%', direction: 'down' }}
+        <MetricCard title="Home Loan" value={formatFullCurrency(-liabilities)} trend={{ value: '-2.3%', direction: 'down' }}
           icon={<Home className="w-5 h-5" />} colorClass="bg-penta-rose-light text-penta-rose" />
       </div>
 
@@ -103,7 +147,7 @@ const NetWorth: React.FC = () => {
         <div className="flex items-center gap-6">
           <div className="h-[180px] flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={creditData}>
+              <AreaChart data={creditScoreHistory}>
                 <defs>
                   <linearGradient id="gradCredit" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#00a87c" stopOpacity={0.2} />
@@ -120,11 +164,13 @@ const NetWorth: React.FC = () => {
           </div>
           <div className="text-center shrink-0">
             <p className="text-xs text-penta-text3 font-body mb-1">CIBIL Score</p>
-            <p className="text-5xl font-serif-italic text-penta-teal">792</p>
-            <p className="text-xs text-penta-teal font-body mt-1 font-medium">Excellent</p>
+            <p className="text-5xl font-serif-italic text-penta-teal">{creditScore}</p>
+            <p className="text-xs text-penta-teal font-body mt-1 font-medium">
+              {creditScore >= 750 ? 'Excellent' : creditScore >= 700 ? 'Good' : 'Fair'}
+            </p>
             <div className="w-32 h-2 rounded-full mt-3 overflow-hidden" style={{ background: 'linear-gradient(90deg, #e11d48, #d97706, #00a87c)' }}>
               <div className="w-full h-full relative">
-                <div className="absolute top-0 h-full w-0.5 bg-penta-text1" style={{ left: '88%' }} />
+                <div className="absolute top-0 h-full w-0.5 bg-penta-text1" style={{ left: `${((creditScore - 300) / 600) * 100}%` }} />
               </div>
             </div>
             <div className="flex justify-between text-[9px] text-penta-text3 font-body mt-0.5 w-32">

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && bun run build 2>&1 | head -100)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm run build 2>&1 | head -100)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm install 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm install --legacy-peer-deps 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm run build 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm install react-is --legacy-peer-deps)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm run dev 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npx vite --port 5173 2>&1)",
+      "Bash(curl -s http://localhost:8080/mcp/stream -X POST -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"fetchNetWorth\",\"arguments\":{\"phone\":\"2222222222\"}}}' 2>&1 | head -20)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm run build 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\Magudesh\\\\Desktop\\\\loveable project from svsm\\\\your-financial-ai-team\" && npm run build 2>&1 | tail -10)"
+    ]
+  }
+}
